@@ -2,15 +2,10 @@
 
 GPIO_Atmega32_Mem GPIO_Mem;
 
-
-const trueRetval = TRUE;
-const falseRetval = FALSE;
-const okRetval = OK;
-const errorRetval = ERROR;
-
-static void* PollPinStatusPullUp(void* wichPin);
-static void* SetOutputLow(void* wichPin);
-static void* SetOutputHigh(void* wichPin);
+static boolean PollPinStatusPullUp(void* wichPin);
+static boolean SetOutputLow(void* wichPin);
+static boolean SetOutputHigh(void* wichPin);
+static boolean ToggleOutput(void* wichPin);
 
 
 uint8 Init_GPIO(GPIO_Pin* wichPin)
@@ -59,6 +54,8 @@ uint8 Init_GPIO(GPIO_Pin* wichPin)
 	wichPin->PollPinStatusFnc = &PollPinStatusPullUp;
 	wichPin->SetOutputHighFnc = &SetOutputHigh;
 	wichPin->SetOutputLowFnc = &SetOutputLow;
+	wichPin->ToggleOutput = &ToggleOutput;
+
 	
 	return OK;
 	
@@ -66,7 +63,7 @@ uint8 Init_GPIO(GPIO_Pin* wichPin)
 }
 
 
-static void* PollPinStatusPullUp(void* wichPin)
+static boolean PollPinStatusPullUp(void* wichPin)
 {
 	
 	GPIO_Pin* thePin = (GPIO_Pin*)wichPin;
@@ -80,40 +77,56 @@ static void* PollPinStatusPullUp(void* wichPin)
 	if (thePin->debounceCnt == DEBOUNCE_COUNTER_MAX)
 	{
 		thePin->debounceCnt = 0U;
-		return &trueRetval;
+		return TRUE;
 	}
 	else
 	{
-		return &falseRetval;
+		return FALSE;
 	}
 }
 
-static void* SetOutputHigh(void* wichPin)
+static boolean SetOutputHigh(void* wichPin)
 {
 
 	GPIO_Pin* thePin = (GPIO_Pin*)wichPin;
 	
 	if (thePin->configuration.pinBehavior != OUTPUT)
 	{
-		return &errorRetval;
+		return ERROR;
 	}
 	
 	*(thePin->outputRegPtr) |= (1U << thePin->configuration.pinNumber);
 	
-	return &okRetval;
+	return OK;
 }
 
-static void* SetOutputLow(void* wichPin)
+static boolean SetOutputLow(void* wichPin)
 {
 	
 	GPIO_Pin* thePin = (GPIO_Pin*)wichPin;
 	
 	if (thePin->configuration.pinBehavior != OUTPUT)
 	{
-		return &errorRetval;
+		return ERROR;
 	}
 	
 	*(thePin->outputRegPtr) &= ~(1U << thePin->configuration.pinNumber);
 	
-	return &okRetval;
+	return OK;
 }
+
+static boolean ToggleOutput(void* wichPin)
+{
+	
+	GPIO_Pin* thePin = (GPIO_Pin*)wichPin;
+	
+	if (thePin->configuration.pinBehavior != OUTPUT)
+	{
+		return ERROR;
+	}
+	
+	*(thePin->outputRegPtr) ^= (1U << thePin->configuration.pinNumber);
+	
+	return OK;
+}
+

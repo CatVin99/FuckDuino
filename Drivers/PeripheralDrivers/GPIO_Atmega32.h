@@ -61,10 +61,10 @@ typedef struct
 	// Interface
 	void* self;
 	PinConf configuration;
-	pFunc_voidP_voidP PollPinStatusFnc;
-	pFunc_voidP_voidP SetOutputHighFnc;
-	pFunc_voidP_voidP SetOutputLowFnc;
-	
+	boolean (*PollPinStatusFnc)(void* self);
+	boolean (*SetOutputHighFnc)(void* self);
+	boolean (*SetOutputLowFnc)(void* self);
+	boolean (*ToggleOutput)(void* self);
 	
 	// Private
 	uint8* directionRegPtr;

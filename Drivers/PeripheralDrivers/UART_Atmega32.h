@@ -1,6 +1,8 @@
 #ifndef UART_ATMEGA32_H
 #define UART_ATMEGA32_H
 
+#define F_CPU 16000000U
+
 #ifndef F_CPU 
 #pragma message(" Undefined F_CPU assuming 8MHZ")
 #define F_CPU 8000000U
@@ -13,7 +15,7 @@
 // Config typedefs
 typedef enum
 {
-	BAUD_9600 = 9600U,
+	BAUD_9600,
 	BAUD_ENUM_CNT
 }Baud;
 

@@ -2,7 +2,7 @@
 #define GENERAL_DEFINE_H
 
 // Parameters
-#define F_CPU 16000000U
+#define F_CPU 16000000UL
 
 #define	KO							0
 #define	OK							1

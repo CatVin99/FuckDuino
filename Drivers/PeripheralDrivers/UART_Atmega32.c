@@ -3,14 +3,14 @@
 
 static boolean SendChar(UART_Peripheral* UartPeripheral, uint8 character);
 
-static uint16 ComputeBaudRateRegister(UartConf configuration)
+static uint32 ComputeBaudRateRegister(UartConf configuration)
 {
 	
-	uint16 retVal;
+	uint32 retVal;
 	
 	if(configuration.speedDouble == NORMAL_SPEED)
 	{
-		retVal = (uint16)( (F_CPU / (16 * configuration.baudRate) ) - 1U );
+		retVal = (uint16)( (F_CPU / (16 * 9600UL) ) - 1U ); 
 	}
 	
 	return retVal;
@@ -74,25 +74,25 @@ boolean Init_UART(UART_Peripheral* uart)
 	// Uart or usart or master SPI
 	if (uart->configuration.SyncroAsyncroOrSPI == ASYNCRONUS )
 	{
-		uart->configuration.SyncroAsyncroOrSPI = ASYNCRONUS;
+		uart->UCSR0C_RegPtr->inBits.UMSEL0_0_1_Fld = ASYNCRONUS;
 	}
 	else if (uart->configuration.SyncroAsyncroOrSPI == SYNCRONUS)
 	{
-		uart->configuration.SyncroAsyncroOrSPI = SYNCRONUS;
+		uart->UCSR0C_RegPtr->inBits.UMSEL0_0_1_Fld  = SYNCRONUS;
 	}
 	else if (uart->configuration.SyncroAsyncroOrSPI == MASTER_SPI)
 	{
-		uart->configuration.SyncroAsyncroOrSPI = MASTER_SPI;
+		uart->UCSR0C_RegPtr->inBits.UMSEL0_0_1_Fld  = MASTER_SPI;
 	}
 	
 	
 	
 	// baudrate
-	uint16 BRR_Val = ComputeBaudRateRegister(uart->configuration);
+	uint32 BRR_Val = ComputeBaudRateRegister(uart->configuration);
 	
-	uint8* BRR_Val_Access = &BRR_Val;
-	uart->UBRR0L_H_RegPtr->inByte[0] = BRR_Val_Access[0];
-	uart->UBRR0L_H_RegPtr->inByte[1] = BRR_Val_Access[1];
+	uart->UBRR0L_H_RegPtr->inByte[0] = (uint8)(BRR_Val & 0xFF);   // Low byte
+	uart->UBRR0L_H_RegPtr->inByte[1] = (uint8)((BRR_Val >> 8) & 0xFF);  // High byte
+
 	
 	
 	// interrupt management
@@ -102,7 +102,7 @@ boolean Init_UART(UART_Peripheral* uart)
 		uart->UCSR0B_RegPtr->inBits.TXCIE0_Fld = ON;
 		uart->UCSR0B_RegPtr->inBits.UDRIE0_Fld = ON;
 	}
-	else
+	else if (uart->configuration.mode == POLLED)
 	{
 		uart->UCSR0B_RegPtr->inBits.RXCIE0_Fld = OFF;
 		uart->UCSR0B_RegPtr->inBits.TXCIE0_Fld = OFF;
@@ -125,12 +125,14 @@ boolean Init_UART(UART_Peripheral* uart)
 
 static boolean SendChar(UART_Peripheral* UartPeripheral, uint8 character)
 {
+	while (!(UartPeripheral->UCSR0A_RegPtr->inBits.UDRE0_Fld))
+	{
+		
+	}
+	
 	*UartPeripheral->Buffer_RegPtr = character;
 	
-	while (!UartPeripheral->UCSR0A_RegPtr->inBits.UDRE0_Fld)
-	{
-	
-	}
+	return TRUE;
 	
 }
 

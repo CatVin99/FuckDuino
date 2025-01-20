@@ -7,10 +7,6 @@
 #include "GeneralDefines.h"
 #include <avr/io.h>
 
-typedef struct
-{
-}GPIO_Atmega32_Mem;
-
 typedef enum
 {
 	INPUT = 0U,
@@ -25,6 +21,7 @@ typedef enum
 	NONE,
 	PULL_UP_ENUM_CNT
 }PullUpPullDOwn;
+
 
 typedef enum
 {

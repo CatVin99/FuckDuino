@@ -1,6 +1,9 @@
 #ifndef GENERAL_DEFINE_H
 #define GENERAL_DEFINE_H
 
+// Parameters
+#define F_CPU 16000000U
+
 #define	KO							0
 #define	OK							1
 #define	NO							0

@@ -1,11 +1,9 @@
 #include "GPIO_Atmega32.h"
 
-GPIO_Atmega32_Mem GPIO_Mem;
-
-static boolean PollPinStatusPullUp(void* wichPin);
-static boolean SetOutputLow(void* wichPin);
-static boolean SetOutputHigh(void* wichPin);
-static boolean ToggleOutput(void* wichPin);
+static boolean PollPinStatusPullUp(GPIO_Pin* wichPin);
+static boolean SetOutputLow(GPIO_Pin* wichPin);
+static boolean SetOutputHigh(GPIO_Pin* wichPin);
+static boolean ToggleOutput(GPIO_Pin* wichPin);
 
 
 uint8 Init_GPIO(GPIO_Pin* wichPin)
@@ -63,12 +61,9 @@ uint8 Init_GPIO(GPIO_Pin* wichPin)
 }
 
 
-static boolean PollPinStatusPullUp(void* wichPin)
+static boolean PollPinStatusPullUp(GPIO_Pin* thePin)
 {
 	
-	GPIO_Pin* thePin = (GPIO_Pin*)wichPin;
-	
-
 	if ( !(*thePin->inputRegPtr & (1U << thePin->configuration.pinNumber)) )
 	{	
 		++thePin->debounceCnt;
@@ -85,10 +80,8 @@ static boolean PollPinStatusPullUp(void* wichPin)
 	}
 }
 
-static boolean SetOutputHigh(void* wichPin)
+static boolean SetOutputHigh(GPIO_Pin* thePin)
 {
-
-	GPIO_Pin* thePin = (GPIO_Pin*)wichPin;
 	
 	if (thePin->configuration.pinBehavior != OUTPUT)
 	{
@@ -100,10 +93,8 @@ static boolean SetOutputHigh(void* wichPin)
 	return OK;
 }
 
-static boolean SetOutputLow(void* wichPin)
+static boolean SetOutputLow(GPIO_Pin* thePin)
 {
-	
-	GPIO_Pin* thePin = (GPIO_Pin*)wichPin;
 	
 	if (thePin->configuration.pinBehavior != OUTPUT)
 	{
@@ -115,11 +106,9 @@ static boolean SetOutputLow(void* wichPin)
 	return OK;
 }
 
-static boolean ToggleOutput(void* wichPin)
+static boolean ToggleOutput(GPIO_Pin* thePin)
 {
-	
-	GPIO_Pin* thePin = (GPIO_Pin*)wichPin;
-	
+		
 	if (thePin->configuration.pinBehavior != OUTPUT)
 	{
 		return ERROR;

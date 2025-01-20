@@ -5,6 +5,7 @@ static boolean SendChar(UART_Peripheral* UartPeripheral, uint8 character);
 
 static uint16 ComputeBaudRateRegister(UartConf configuration)
 {
+	
 	uint16 retVal;
 	
 	if(configuration.speedDouble == NORMAL_SPEED)
@@ -121,11 +122,11 @@ boolean Init_UART(UART_Peripheral* uart)
 
 static boolean SendChar(UART_Peripheral* UartPeripheral, uint8 character)
 {
-	UartPeripheral->Buffer_RegPtr = character;
+	*UartPeripheral->Buffer_RegPtr = character;
 	
 	while (UartPeripheral->UCSR0A_RegPtr->inBits.TXC0_Fld)
 	{
-		
+
 	}
 	
 }

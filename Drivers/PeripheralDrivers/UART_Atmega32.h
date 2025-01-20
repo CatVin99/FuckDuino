@@ -1,13 +1,6 @@
 #ifndef UART_ATMEGA32_H
 #define UART_ATMEGA32_H
 
-#define F_CPU 16000000U
-
-#ifndef F_CPU 
-#pragma message(" Undefined F_CPU assuming 8MHZ")
-#define F_CPU 8000000U
-#endif
-
 #include "PlatformTypes.h"
 #include "GeneralDefines.h"
 #include <avr/io.h>
@@ -134,8 +127,8 @@ typedef union
 
 typedef union
 {
-	uint16 UBRR0L_H   : 12;
-	uint8 inByte[2];
+	uint8 UBRR0_L;
+	uint8 UBRR0_H;
 }UBRR0L_H_Def;
 
 typedef struct

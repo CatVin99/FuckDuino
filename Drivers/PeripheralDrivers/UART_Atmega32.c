@@ -1,21 +1,20 @@
 #include "UART_Atmega32.h"
 
+//default to Arduino oscillator
+#ifndef F_CPU
+#define F_CPU 16000000UL
+#warning "F_CPU not defined! Assuming 16MHz."
+#endif
+
+#ifndef BAUD
+#define BAUD 9600
+#warning "BAUD not defined! Assuming 9600"
+#endif
+
+#include <util/setbaud.h>   //BAUD registers calculations
+
 
 static boolean SendChar(UART_Peripheral* UartPeripheral, uint8 character);
-
-static uint32 ComputeBaudRateRegister(UartConf configuration)
-{
-	
-	uint32 retVal;
-	
-	if(configuration.speedDouble == NORMAL_SPEED)
-	{
-		retVal = (uint16)( (F_CPU / (16 * 9600UL) ) - 1U ); 
-	}
-	
-	return retVal;
-	
-}
 
 
 boolean Init_UART(UART_Peripheral* uart)
@@ -23,12 +22,13 @@ boolean Init_UART(UART_Peripheral* uart)
 	uart->UCSR0A_RegPtr = &UCSR0A;
 	uart->UCSR0B_RegPtr = &UCSR0B;
 	uart->UCSR0C_RegPtr = &UCSR0C;
-	uart->UBRR0L_H_RegPtr = &UBRR0L;
+	uart->UBRR0L_H_RegPtr->UBRR0_L = &UBRR0L;
+	uart->UBRR0L_H_RegPtr->UBRR0_H = &UBRR0H;
 	uart->Buffer_RegPtr = &UDR0;
 	
-	// Making sure i'm off
-	uart->UCSR0B_RegPtr->inBits.TXEN0_Fld = OFF;
-	uart->UCSR0B_RegPtr->inBits.RXEN0_Fld = OFF;
+//	// Making sure i'm off
+//	uart->UCSR0B_RegPtr->inBits.TXEN0_Fld = OFF;
+//	uart->UCSR0B_RegPtr->inBits.RXEN0_Fld = OFF;
 	
 	
 	
@@ -42,10 +42,10 @@ boolean Init_UART(UART_Peripheral* uart)
 	}
 	
 	// Double speed
-	if (uart->configuration.speedDouble == NORMAL_SPEED)
-	{
-		uart->UCSR0A_RegPtr->inBits.U2X0_Fld = OFF;
-	}
+//	if (uart->configuration.speedDouble == NORMAL_SPEED)
+//	{
+//		uart->UCSR0A_RegPtr->inBits.U2X0_Fld = OFF;
+//	}
 	
 	// Stop bit
 	if (uart->configuration.stopBit == JUST_ONE)
@@ -58,56 +58,62 @@ boolean Init_UART(UART_Peripheral* uart)
 	}
 	
 	// Parity
-	if (uart->configuration.parity == NONE_P )
-	{
-		uart->UCSR0C_RegPtr->inBits.UPM0_0_1_Fld = NONE_P;
-	}
-	else if (uart->configuration.parity == ODD)
-	{
-		uart->UCSR0C_RegPtr->inBits.UPM0_0_1_Fld = ODD;
-	}
-	else if (uart->configuration.parity == EVEN )
-	{
-		uart->UCSR0C_RegPtr->inBits.UPM0_0_1_Fld = EVEN;
-	}
+//	if (uart->configuration.parity == NONE_P )
+//	{
+//		uart->UCSR0C_RegPtr->inBits.UPM0_0_1_Fld = NONE_P;
+//	}
+//	else if (uart->configuration.parity == ODD)
+//	{
+//		uart->UCSR0C_RegPtr->inBits.UPM0_0_1_Fld = ODD;
+//	}
+//	else if (uart->configuration.parity == EVEN )
+//	{
+//		uart->UCSR0C_RegPtr->inBits.UPM0_0_1_Fld = EVEN;
+//	}
 	
 	// Uart or usart or master SPI
-	if (uart->configuration.SyncroAsyncroOrSPI == ASYNCRONUS )
-	{
-		uart->UCSR0C_RegPtr->inBits.UMSEL0_0_1_Fld = ASYNCRONUS;
-	}
-	else if (uart->configuration.SyncroAsyncroOrSPI == SYNCRONUS)
-	{
-		uart->UCSR0C_RegPtr->inBits.UMSEL0_0_1_Fld  = SYNCRONUS;
-	}
-	else if (uart->configuration.SyncroAsyncroOrSPI == MASTER_SPI)
-	{
-		uart->UCSR0C_RegPtr->inBits.UMSEL0_0_1_Fld  = MASTER_SPI;
-	}
+//	if (uart->configuration.SyncroAsyncroOrSPI == ASYNCRONUS )
+//	{
+//		uart->UCSR0C_RegPtr->inBits.UMSEL0_0_1_Fld = ASYNCRONUS;
+//	}
+//	else if (uart->configuration.SyncroAsyncroOrSPI == SYNCRONUS)
+//	{
+//		uart->UCSR0C_RegPtr->inBits.UMSEL0_0_1_Fld  = SYNCRONUS;
+//	}
+//	else if (uart->configuration.SyncroAsyncroOrSPI == MASTER_SPI)
+//	{
+//		uart->UCSR0C_RegPtr->inBits.UMSEL0_0_1_Fld  = MASTER_SPI;
+//	}
 	
 	
 	
 	// baudrate
-	uint32 BRR_Val = ComputeBaudRateRegister(uart->configuration);
 	
-	uart->UBRR0L_H_RegPtr->inByte[0] = (uint8)(BRR_Val & 0xFF);   // Low byte
-	uart->UBRR0L_H_RegPtr->inByte[1] = (uint8)((BRR_Val >> 8) & 0xFF);  // High byte
+	//uart->UBRR0L_H_RegPtr->UBRR0_L = UBRRH_VALUE;   // Low byte
+	//uart->UBRR0L_H_RegPtr->UBRR0_L = UBRRL_VALUE;  // High byte
+	
+	UBRR0H = UBRRH_VALUE;
+	UBRR0L = UBRRL_VALUE;
+	
+	  #if USE_2X
+	  UCSR0A |= (1 << U2X0);
+	  #endif
 
 	
 	
-	// interrupt management
-	if (uart->configuration.mode == INTERRUPT)
-	{
-		uart->UCSR0B_RegPtr->inBits.RXCIE0_Fld = ON;
-		uart->UCSR0B_RegPtr->inBits.TXCIE0_Fld = ON;
-		uart->UCSR0B_RegPtr->inBits.UDRIE0_Fld = ON;
-	}
-	else if (uart->configuration.mode == POLLED)
-	{
-		uart->UCSR0B_RegPtr->inBits.RXCIE0_Fld = OFF;
-		uart->UCSR0B_RegPtr->inBits.TXCIE0_Fld = OFF;
-		uart->UCSR0B_RegPtr->inBits.UDRIE0_Fld = OFF;
-	}
+//	// interrupt management
+//	if (uart->configuration.mode == INTERRUPT)
+//	{
+//		uart->UCSR0B_RegPtr->inBits.RXCIE0_Fld = ON;
+//		uart->UCSR0B_RegPtr->inBits.TXCIE0_Fld = ON;
+//		uart->UCSR0B_RegPtr->inBits.UDRIE0_Fld = ON;
+//	}
+//	else if (uart->configuration.mode == POLLED)
+//	{
+//		uart->UCSR0B_RegPtr->inBits.RXCIE0_Fld = OFF;
+//		uart->UCSR0B_RegPtr->inBits.TXCIE0_Fld = OFF;
+//		uart->UCSR0B_RegPtr->inBits.UDRIE0_Fld = OFF;
+//	}
 	
 	// enableing
 	uart->UCSR0B_RegPtr->inBits.TXEN0_Fld = ON;

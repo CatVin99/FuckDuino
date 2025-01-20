@@ -87,9 +87,12 @@ boolean Init_UART(UART_Peripheral* uart)
 	
 	
 	
-	
 	// baudrate
-	uart->UBRR0L_H_RegPtr->UBRR0L_H = ComputeBaudRateRegister(uart->configuration);
+	uint16 BRR_Val = ComputeBaudRateRegister(uart->configuration);
+	
+	uint8* BRR_Val_Access = &BRR_Val;
+	uart->UBRR0L_H_RegPtr->inByte[0] = BRR_Val_Access[0];
+	uart->UBRR0L_H_RegPtr->inByte[1] = BRR_Val_Access[1];
 	
 	
 	// interrupt management
@@ -104,7 +107,7 @@ boolean Init_UART(UART_Peripheral* uart)
 		uart->UCSR0B_RegPtr->inBits.RXCIE0_Fld = OFF;
 		uart->UCSR0B_RegPtr->inBits.TXCIE0_Fld = OFF;
 		uart->UCSR0B_RegPtr->inBits.UDRIE0_Fld = OFF;
-		}
+	}
 	
 	// enableing
 	uart->UCSR0B_RegPtr->inBits.TXEN0_Fld = ON;
@@ -124,9 +127,9 @@ static boolean SendChar(UART_Peripheral* UartPeripheral, uint8 character)
 {
 	*UartPeripheral->Buffer_RegPtr = character;
 	
-	while (UartPeripheral->UCSR0A_RegPtr->inBits.TXC0_Fld)
+	while (!UartPeripheral->UCSR0A_RegPtr->inBits.UDRE0_Fld)
 	{
-
+	
 	}
 	
 }

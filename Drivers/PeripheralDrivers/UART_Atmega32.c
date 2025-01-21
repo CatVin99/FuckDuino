@@ -1,17 +1,14 @@
 #include "UART_Atmega32.h"
 
 
-static boolean SendChar(UART_Peripheral* UartPeripheral, uint8 character);
+static boolean SendString(UART_Peripheral* UartPeripheral, uint8* string, uint8 sizeOfString);
 
 static uint32 ComputeBaudRateRegister(UartConf configuration)
 {
 	
 	uint32 retVal;
 	
-	if(configuration.speedDouble == NORMAL_SPEED)
-	{
-		retVal = (uint16)( (F_CPU / (16 * 9600UL) ) - 1U );
-	}
+	retVal = (uint16)( (F_CPU / (16 * 9600UL) ) - 1U );
 	
 	return retVal;
 	
@@ -41,12 +38,7 @@ boolean Init_UART(UART_Peripheral* uart)
 		uart->UCSR0B_RegPtr->inBits.UCSZ02_Fld = OFF;
 	}
 	
-	// Double speed
-	if (uart->configuration.speedDouble == NORMAL_SPEED)
-	{
-		uart->UCSR0A_RegPtr->inBits.U2X0_Fld = OFF;
-	}
-	
+
 	// Stop bit
 	if (uart->configuration.stopBit == JUST_ONE)
 	{
@@ -86,14 +78,17 @@ boolean Init_UART(UART_Peripheral* uart)
 	}
 	
 	
-	
 	// baudrate
 	uint32 BRR_Val = ComputeBaudRateRegister(uart->configuration);
 	
 	uart->UBRR0L_H_RegPtr->inByte[0] = (uint8)(BRR_Val & 0xFF);   // Low byte
 	uart->UBRR0L_H_RegPtr->inByte[1] = (uint8)((BRR_Val >> 8) & 0xFF);  // High byte
 
-	
+	// Double speed if needed
+	//if (uart->configuration.speedDouble == NORMAL_SPEED)
+	//{
+	//	uart->UCSR0A_RegPtr->inBits.U2X0_Fld = OFF;
+	//}
 	
 	// interrupt management
 	if (uart->configuration.mode == INTERRUPT)
@@ -115,22 +110,21 @@ boolean Init_UART(UART_Peripheral* uart)
 	
 	
 	uart->self = (void*)uart;
-	uart->TransmitBuffer = &SendChar;
+	uart->TransmitBuffer = &SendString;
+
 	
 }
 
 
 
-
-
-static boolean SendChar(UART_Peripheral* UartPeripheral, uint8 character)
+static boolean SendString(UART_Peripheral* UartPeripheral, uint8* string, uint8 sizeOfString)
 {
-	while (!(UartPeripheral->UCSR0A_RegPtr->inBits.UDRE0_Fld))
+	for (uint8 itr = 0; itr < sizeOfString; ++itr)
 	{
-		
+		while (!(UartPeripheral->UCSR0A_RegPtr->inBits.UDRE0_Fld)){}
+		*UartPeripheral->Buffer_RegPtr = string[itr];
 	}
 	
-	*UartPeripheral->Buffer_RegPtr = character;
 	
 	return TRUE;
 	

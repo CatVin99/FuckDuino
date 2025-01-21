@@ -1,6 +1,13 @@
 #ifndef UART_ATMEGA32_H
 #define UART_ATMEGA32_H
 
+#define F_CPU 16000000U
+
+#ifndef F_CPU
+#pragma message(" Undefined F_CPU assuming 8MHZ")
+#define F_CPU 8000000U
+#endif
+
 #include "PlatformTypes.h"
 #include "GeneralDefines.h"
 #include <avr/io.h>
@@ -11,15 +18,6 @@ typedef enum
 	BAUD_9600,
 	BAUD_ENUM_CNT
 }Baud;
-
-
-typedef enum
-{
-	NORMAL_SPEED = 0,
-	DOUBLE_SPEED,
-	SPEED_ENUM_CNT
-}DblSpeed;
-
 
 typedef enum
 {
@@ -42,7 +40,7 @@ typedef enum
 {
 	JUST_ONE = 0,
 	TWO,
-	STOPBIT_ENUM_CNT	
+	STOPBIT_ENUM_CNT
 }StopBit;
 
 typedef enum
@@ -71,7 +69,6 @@ typedef struct
 	Operation SyncroAsyncroOrSPI;
 	StopBit stopBit;
 	ParityCheck parity;
-	DblSpeed speedDouble;
 }UartConf;
 
 
@@ -88,7 +85,7 @@ typedef union
 		uint8 UDRE0_Fld : 1;
 		uint8 TXC0_Fld : 1;
 		uint8 RXC0_Fld : 1;
-	}inBits;	
+	}inBits;
 	
 	uint8 inByte;
 	
@@ -127,8 +124,8 @@ typedef union
 
 typedef union
 {
-	uint8 UBRR0_L;
-	uint8 UBRR0_H;
+	uint16 UBRR0L_H   : 12;
+	uint8 inByte[2];
 }UBRR0L_H_Def;
 
 typedef struct
@@ -137,10 +134,10 @@ typedef struct
 	void* self;
 	UartConf configuration;
 	boolean (*ReceiveBuffer)(void* self);
-	boolean (*TransmitBuffer)(void* self, uint8 character);
+	boolean (*TransmitBuffer)(void* self, uint8* character, uint8 lenght);
 	
 	
-	 
+	
 	// Private
 	uint8 receiveCnt;
 	uint8 transmitCnt;
